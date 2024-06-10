@@ -4,13 +4,14 @@ import pandas as pd
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import time
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix, classification_report
+
 # Download necessary NLTK data
 nltk.download('all')
 
-#initialise analyser
+# Initialize analyzer
 analyzer = SentimentIntensityAnalyzer()
 
 # Initialize DataFrame
@@ -25,7 +26,7 @@ def preprocess_text(text):
     return ' '.join(lemmatized_tokens)
 
 # Fetch Reddit data with error handling and delay
-def fetch_reddit_data(url, headers, retries=1):
+def fetch_reddit_data(url, headers, retries=5):
     for i in range(retries):
         try:
             response = requests.get(url, headers=headers)
@@ -109,7 +110,6 @@ def get_sentiment(text):
     sentiment = 1 if scores['pos'] > 0 else 0
     return sentiment
 
-
 # Main script execution
 def main():
     reddit_url = "https://www.reddit.com/r/bindingofisaac.json"
@@ -130,13 +130,17 @@ def main():
     # Preprocess the text in DataFrame
     df['reviewText'] = df['reviewText'].apply(preprocess_text)
     print(df)
+    
+    # Apply sentiment analysis
     df['sentiment'] = df['reviewText'].apply(get_sentiment)
     print(df)
 
-    print(confusion_matrix(df['Positive'], df['sentiment']))
-
-    print(classification_report(df['Positive'], df['sentiment']))
-    
+    # Assuming df has a column 'Positive' for actual sentiment labels for evaluation
+    if 'Positive' in df.columns:
+        print(confusion_matrix(df['Positive'], df['sentiment']))
+        print(classification_report(df['Positive'], df['sentiment']))
+    else:
+        print("Column 'Positive' not found in the DataFrame.")
 
 if __name__ == "__main__":
     main()
